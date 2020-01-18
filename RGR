@@ -1,0 +1,138 @@
+#include "SFML/Graphics.hpp"
+#include "SFML/Audio.hpp"
+#include <iostream> 
+#include "windows.h"
+
+using namespace std;
+using namespace sf;
+
+class Muz
+{
+	SoundBuffer buffer;
+	Sound muzon;
+	unsigned int sampleRate;
+	Uint64 mark;
+	int sample;
+	double f;
+public:
+	Muz() 
+	{
+		string path = "muzlo/";
+		string filename;
+		cout << "File name: ";
+		cin >> filename;
+		path += filename;
+		buffer.loadFromFile(path);
+		muzon.setBuffer(buffer);
+		buffer.getSamples();
+		sampleRate = (buffer.getSampleRate() * buffer.getChannelCount()) / 1000;
+	}
+	void start()
+	{
+		muzon.setLoop(true);
+		muzon.play();
+	}
+	void calculate()
+	{
+		
+		sample = 0;
+		mark = (muzon.getPlayingOffset().asMilliseconds()) * (sampleRate);
+		for (Uint64 i = (mark); i < (mark + sampleRate); i++)
+		{
+			long float temp = buffer.getSamples()[i];
+			if (sample < temp) { sample = temp; }
+			f++;
+		}
+		
+		sample = (sample / 60);
+	}
+	int getSample() 
+	{
+		return sample;
+	}
+};
+
+class Disp
+{
+	int sample;
+	int intensity;
+	RenderWindow okno;
+	RectangleShape poloska;
+	int rad = 0;
+	Muz zhopa;
+	int f;
+public:
+	bool isOpen() 
+	{
+		return okno.isOpen();
+	}
+	Disp()
+	{
+		poloska.setPosition(Vector2f(52, 500));
+		poloska.setFillColor(Color::Magenta);
+		okno.create(VideoMode(200, 500), "Window");
+		zhopa.start();
+	}
+	void calculate()
+	{
+		zhopa.calculate();
+		if (rad < zhopa.getSample()) 
+		{
+			
+			f++;
+			if(f>1000&&f<5000)
+			{
+				rad = -1;
+			}
+			rad++;
+		}
+		else
+		{
+			rad--;
+		}
+	}
+	void update()
+	{
+		poloska.setSize(Vector2f(100, -rad));
+		for (int i = 0; i < 200; i++)
+		okno.clear();
+		okno.draw(poloska);
+		okno.display();
+	}
+	void close()
+	{
+		okno.close();
+	}
+	void clear()
+	{
+		okno.clear();
+	}
+	bool pollEvent(Event &evend)
+	{
+		return okno.pollEvent(evend);
+	}
+	void display()
+	{
+		okno.display();
+	}
+};
+
+int main(){
+	Disp shapka;
+	
+
+	while (shapka.isOpen())
+	{
+		Event event;
+		while (shapka.pollEvent(event))
+		{
+			if (event.type == Event::Closed)
+				shapka.close();
+		}
+
+		shapka.calculate();
+		shapka.update();
+		Sleep(1);
+	}
+	return 0;
+}
